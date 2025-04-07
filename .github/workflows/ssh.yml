@@ -1,1 +1,26 @@
+name: Daily SSH to 2 Segfault Servers
 
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 0h UTC = 7h sáng Việt Nam mỗi ngày
+
+jobs:
+  ssh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Tạo SSH key từ secret
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan 8lgm.segfault.net >> ~/.ssh/known_hosts
+          ssh-keyscan adm.segfault.net >> ~/.ssh/known_hosts
+
+      - name: SSH đến 8lgm.segfault.net
+        run: |
+          ssh -L5900:0:5900 -o 'SetEnv SECRET=xrfN5crY44zL1xNtmJ5UXIF6' root@8lgm.segfault.net || echo "Không kết nối được tới 8lgm"
+
+      - name: SSH đến adm.segfault.net
+        run: |
+          ssh -L5900:0:5900 -o 'SetEnv SECRET=OsQKCpWBMgOPtnOv7Vzx3zqo' root@adm.segfault.net || echo "Không kết nối được tới adm"
