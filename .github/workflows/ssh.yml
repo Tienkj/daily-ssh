@@ -1,26 +1,21 @@
-name: Daily SSH to 2 Segfault Servers
+name: SSH Connection
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 0h UTC = 7h sáng Việt Nam mỗi ngày
+    - cron: '0 0 7 * * *' # Lệnh này sẽ chạy vào 7h sáng UTC mỗi ngày.
+  workflow_dispatch: # Cho phép bạn chạy thủ công từ GitHub Actions.
 
 jobs:
-  ssh:
+  ssh-connection:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Tạo SSH key từ secret
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan 8lgm.segfault.net >> ~/.ssh/known_hosts
-          ssh-keyscan adm.segfault.net >> ~/.ssh/known_hosts
+    - name: Check out repository
+      uses: actions/checkout@v2
 
-      - name: SSH đến 8lgm.segfault.net
-        run: |
-          ssh -L5900:0:5900 -o 'SetEnv SECRET=xrfN5crY44zL1xNtmJ5UXIF6' root@8lgm.segfault.net || echo "Không kết nối được tới 8lgm"
+    - name: Install sshpass
+      run: sudo apt-get install sshpass
 
-      - name: SSH đến adm.segfault.net
-        run: |
-          ssh -L5900:0:5900 -o 'SetEnv SECRET=OsQKCpWBMgOPtnOv7Vzx3zqo' root@adm.segfault.net || echo "Không kết nối được tới adm"
+    - name: Connect to SSH
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o "StrictHostKeyChecking=no" -L5900:0:5900 -o "SetEnv SECRET=${{ secrets.SECRET }}" root@adm.segfault.net
